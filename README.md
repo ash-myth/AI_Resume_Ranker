@@ -38,22 +38,22 @@ Smart Resume Ranker is an end to end resume screening and ranking system. You pr
 
 ```
 AI_Resume_Ranker
-│ app.py Main Streamlit application
-│ README.md Documentation
-│ requirements.txt List of dependencies
-│ skill_db_relax_20.json Extended skill dataset for mapping
-│ token_dist.json Token distribution reference
+│ app.py: Main Streamlit application
+│ README.md: Documentation
+│ requirements.txt: List of dependencies
+│ skill_db_relax_20.json: Extended skill dataset for mapping
+│ token_dist.json: Token distribution reference
 │
 ├── core
-│ embedding.py Embedding model and similarity scoring
-│ extract.py Resume parsing and structured profile extraction
-│ ranking.py Weighted scoring and candidate ranking logic
-│ skill_extractor.py Skill detection, normalization, and synonym support
-│ utils.py File readers and helper utility functions
-│ visuals.py Visualization and chart generation utilities
+│ embedding.py: Embedding model and similarity scoring
+│ extract.py: Resume parsing and structured profile extraction
+│ ranking.py: Weighted scoring and candidate ranking logic
+│ skill_extractor.py: Skill detection, normalization, and synonym support
+│ utils.py: File readers and helper utility functions
+│ visuals.py: Visualization and chart generation utilities
 │
 └── models
-skills_taxonomy.txt Core domain specific skill whitelist
+skills_taxonomy.txt: Core domain specific skill whitelist
 ```
 
 ---
@@ -61,8 +61,8 @@ skills_taxonomy.txt Core domain specific skill whitelist
 ## Installation
 
 ```
-git clone https://github.com/<your-username>/ResumeMatcherPro.git
-cd ResumeMatcherPro
+git clone https://github.com/ash-myth/AI_Resume_Ranker.git
+cd AI_Resume_Ranker
 python -m venv .venv
 
 # Windows
