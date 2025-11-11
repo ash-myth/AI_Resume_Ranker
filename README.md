@@ -1,4 +1,4 @@
-# Smmart Resume Ranker
+# Smart Resume Ranker
 
 Smart Resume Ranker is an end to end resume screening and ranking system. You provide a job description and upload multiple resumes. The system extracts relevant information, identifies skills, computes semantic similarity, evaluates candidate profile strength, and produces a sorted list of the best matches. It also provides visual explanations and skill gap insights for each candidate.
 
