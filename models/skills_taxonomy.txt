@@ -1,0 +1,103 @@
+python
+java
+c
+c++
+javascript
+typescript
+html
+css
+
+sql
+mysql
+postgresql
+mongodb
+nosql
+
+pandas
+numpy
+scikit-learn
+statsmodels
+matplotlib
+seaborn
+plotly
+excel
+power bi
+tableau
+
+xgboost
+lightgbm
+catboost
+regression
+random forest
+svm
+knn
+decision trees
+pca
+kmeans
+
+tensorflow
+pytorch
+keras
+
+nlp
+text preprocessing
+tfidf
+word2vec
+glove
+transformers
+bert
+gpt
+huggingface
+llm
+genai
+prompt engineering
+langchain
+rag
+
+computer vision
+opencv
+cnn
+resnet
+vgg
+yolo
+
+flask
+fastapi
+django
+rest api
+
+git
+github
+linux
+bash
+docker
+
+aws
+azure
+gcp
+
+airflow
+kafka
+spark
+hadoop
+data engineering
+etl
+eda
+feature engineering
+hyperparameter tuning
+model evaluation
+mlops
+
+statistics
+probability
+a/b testing
+hypothesis testing
+time series
+arima
+seasonality
+
+oops
+dsa
+system design
+software testing
+agile
