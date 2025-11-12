@@ -119,9 +119,9 @@ To adjust visualization styling: ```core/visuals.py```
 - Downloadable CSV of complete ranking results
 
 ## 🖼️ Screenshots
-| Upload Resumes | Ranked Candidates | Candidate Insights |
-|----------------|------------------|--------------------|
-| ![Upload Page](assets/upload_page.png) | ![Ranked Results](assets/ranked_results.png) | ![Insights View](assets/insights_view.png) |
+| Upload Resumes | Ranked Candidates | Candidate Insights | Candidate Analysis |
+|----------------|------------------|--------------------|--------------------|
+| ![Upload Page](assets/upload_page.png) | ![Ranked Results](assets/ranked_results.png) | ![Insights View](assets/insights.png) | ![Canditate Analysis](assets/canditate_analysis.png) |
 
 ## Use Cases
 
