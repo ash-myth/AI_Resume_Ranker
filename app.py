@@ -7,7 +7,7 @@ from core.extract import extract_profile
 from core.ranking import score_candidates, explain_candidate
 from core.visuals import plot_leaderboard, plot_skill_coverage, plot_radar
 
-st.set_page_config(page_title="ResumeMatcher", layout="wide")
+st.set_page_config(page_title="AI Resume Analyzer", layout="wide")
 st.title("Smart Resume Ranker")
 
 left, right = st.columns([1,1])

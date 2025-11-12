@@ -155,17 +155,39 @@ def extract_cgpa(t):
 
     return None
 
+def extract_contacts(text):
+    import unicodedata
 
-def extract_contacts(t):
-    phone = re.search(r"\+?\d{6,13}", t)
-    phone = phone.group(0) if phone else ""
+    # Normalize text
+    t = unicodedata.normalize("NFKC", text)
+    t = t.replace("\u00A0", " ")
+    t = re.sub(r"[^\x00-\x7F]", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
 
-    phone = phone[:10] if len(phone) > 10 else phone
+    # ---- EMAIL SUPER-ROBUST MODE ----
+    # Step 1: Try normal match (works for clean resumes)
+    m = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", t)
+    if m:
+        email = m.group(0)
+    else:
+        # Step 2: Reconstruct email from scattered characters
+        compressed = re.sub(r"\s+", "", text)            # remove spaces
+        compressed = re.sub(r"[^A-Za-z0-9@._+-]", "", compressed)  # keep only email characters
+        m2 = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", compressed)
+        email = m2.group(0) if m2 else ""
 
-    email = re.search(r"[\w\.-]+@[\w\.-]+", t)
-    email = email.group(0) if email else ""
+    # ---- PHONE SUPER-ROBUST MODE ----
+    digits = re.sub(r"\D", "", text)
+    candidates = []
+    for i in range(len(digits) - 9):
+        chunk = digits[i:i+10]
+        if chunk[0] in "6789":
+            candidates.append(chunk)
+    phone = candidates[0] if candidates else ""
 
     return email, phone
+
+
 
 def recency_score(text):
     text = text.lower()

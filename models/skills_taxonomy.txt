@@ -87,6 +87,7 @@ feature engineering
 hyperparameter tuning
 model evaluation
 mlops
+devops
 
 statistics
 probability
