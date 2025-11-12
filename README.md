@@ -118,6 +118,11 @@ To adjust visualization styling: ```core/visuals.py```
 - Leaderboard bar chart
 - Downloadable CSV of complete ranking results
 
+## 🖼️ Screenshots
+| Upload Resumes | Ranked Candidates | Candidate Insights |
+|----------------|------------------|--------------------|
+| ![Upload Page](assets/upload_page.png) | ![Ranked Results](assets/ranked_results.png) | ![Insights View](assets/insights_view.png) |
+
 ## Use Cases
 
 - HR recruitment pre-screening
