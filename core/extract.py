@@ -113,7 +113,6 @@ def extract_education_level(t):
 def extract_cgpa(t):
     t = t.lower()
 
-    # Case: "7.43 CGPA"
     m = re.search(r"(\d\.\d{1,2})\s*cgpa", t)
     if m:
         try:
@@ -123,7 +122,6 @@ def extract_cgpa(t):
         except:
             pass
 
-    # Case: "CGPA: 7.43" or "CGPA - 7.43" or "CGPA 7.43"
     m = re.search(r"cgpa\s*[:=\- ]\s*(\d\.\d{1,2})", t)
     if m:
         try:
@@ -133,7 +131,6 @@ def extract_cgpa(t):
         except:
             pass
 
-    # Case: GPA 8.15
     m = re.search(r"gpa\s*[:=\- ]\s*(\d\.\d{1,2})", t)
     if m:
         try:
@@ -143,7 +140,6 @@ def extract_cgpa(t):
         except:
             pass
 
-    # Case: "7.43/10"
     m = re.search(r"(\d\.\d{1,2})\s*/\s*10", t)
     if m:
         try:
@@ -158,25 +154,20 @@ def extract_cgpa(t):
 def extract_contacts(text):
     import unicodedata
 
-    # Normalize text
     t = unicodedata.normalize("NFKC", text)
     t = t.replace("\u00A0", " ")
     t = re.sub(r"[^\x00-\x7F]", " ", t)
     t = re.sub(r"\s+", " ", t).strip()
 
-    # ---- EMAIL SUPER-ROBUST MODE ----
-    # Step 1: Try normal match (works for clean resumes)
     m = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", t)
     if m:
         email = m.group(0)
     else:
-        # Step 2: Reconstruct email from scattered characters
         compressed = re.sub(r"\s+", "", text)            # remove spaces
         compressed = re.sub(r"[^A-Za-z0-9@._+-]", "", compressed)  # keep only email characters
         m2 = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", compressed)
         email = m2.group(0) if m2 else ""
 
-    # ---- PHONE SUPER-ROBUST MODE ----
     digits = re.sub(r"\D", "", text)
     candidates = []
     for i in range(len(digits) - 9):
@@ -198,23 +189,20 @@ def recency_score(text):
         flags=re.I
     )
 
-    # Case 1: Found relevant work/project years
     if matches:
         years = [int(y[1]) for y in matches]  # y[1] extracts only the year
         latest = max(years)
 
     else:
-        # Case 2: look for any years but ignore schooling (2018 and before)
         years = [int(y) for y in re.findall(r"20\d{2}", text) if int(y) > 2018]
 
         if not years:
-            return 0.6  # soft neutral default
+            return 0.6  
 
         latest = max(years)
 
     gap = 2025 - latest
 
-    # Convert recency gap into score
     if gap <= 0:
         return 1.0      
     elif gap == 1:
