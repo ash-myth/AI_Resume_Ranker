@@ -217,7 +217,7 @@ if "scores" in st.session_state:
                 return ""
 
         st.dataframe(
-            df_show.style.applymap(color_cgpa, subset=["cgpa"] if "cgpa" in df_show.columns else []),
+            df_show.style.map(color_cgpa, subset=["cgpa"] if "cgpa" in df_show.columns else []),
             use_container_width=True,
             height=min(40 + len(df_show) * 35, 380),
         )
