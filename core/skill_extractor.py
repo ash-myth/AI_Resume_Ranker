@@ -1,9 +1,7 @@
 import re
 from difflib import get_close_matches
-
 def _norm(s):
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9\+\.\- ]", " ", s.lower())).strip()
-
 def build_skill_index(skills, synonyms=None):
     synonyms = {
     "power bi": ["powerbi", "ms power bi"],
@@ -24,7 +22,6 @@ def build_skill_index(skills, synonyms=None):
     "rag": ["retrieval augmented generation"],
     "eda": ["exploratory data analysis","data analysis","data cleaning"]
     }
-
     idx = {}
     base = set()
     for s in skills:
@@ -41,25 +38,20 @@ def build_skill_index(skills, synonyms=None):
                     if ak:
                         idx[ak] = idx[c]
     return idx
-
 def compute_rarity_scores(df):
     from collections import Counter
-
     all_sk = []
     for row in df["skills_found"]:
         all_sk.extend([_norm(s) for s in row])
-
     freq = Counter(all_sk)
     maxf = max(freq.values()) if freq else 1
     rarity = {skill: 1 - (count / maxf) for skill, count in freq.items()}
     return rarity
-
 def _ngrams(tokens, n_max=4):
     L = len(tokens)
     for n in range(n_max, 0, -1):
         for i in range(L - n + 1):
             yield " ".join(tokens[i:i+n])
-
 def extract_skills_whitelist(text, skill_index, n_max=4, fuzzy=False):
     t = _norm(text)
     toks = [x for x in t.split() if x]
@@ -82,7 +74,6 @@ def extract_skills_whitelist(text, skill_index, n_max=4, fuzzy=False):
                     found.append(skill_index[k])
     found = sorted(set(found), key=lambda s: s.lower())
     return found
-
 def order_skills_jd_first(found_skills, jd_required_set):
     jd_first = [s for s in found_skills if _norm(s) in jd_required_set]
     rest = [s for s in found_skills if _norm(s) not in jd_required_set]
