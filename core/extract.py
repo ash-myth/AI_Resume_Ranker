@@ -28,6 +28,9 @@ def _parse_to_month_year(token):
     m = re.match(r"(\d{1,2})/(\d{4})", token)
     if m:
         return int(m.group(2)), int(m.group(1))
+    m = re.match(r"(\d{4})", token)
+    if m:
+        return int(m.group(1)), 1
     return None, None
 
 def extract_years_of_experience(text):
@@ -38,22 +41,23 @@ def extract_years_of_experience(text):
         r"((?:[A-Za-z]{3,9}\s+\d{4})|(?:\d{4})|\d{1,2}/\d{4}|\d{1,2}/\d{1,2}/\d{4}|present|current|now)",
         text, flags=re.I
     )
-    total_months = 0
-    seen = set()
+    start_years = []
+    end_years = []
+
     for start, end in ranges:
         sy, sm = _parse_to_month_year(start)
         ey, em = _parse_to_month_year(end)
+
         if sy and ey:
-            months = (ey - sy) * 12 + (em - sm) + 1
-            if 1 <= months <= 600:
-                key = (sy, sm, ey, em)
-                if key not in seen:
-                    seen.add(key)
-                    total_months += months
-    if total_months == 0:
-        m2 = re.findall(r"(\d+)\s+months?", text)
-        for m in m2:
-            total_months += int(m)
+            start_years.append(sy)
+            end_years.append(ey)
+
+    if start_years and end_years:
+        total_years = max(end_years) - min(start_years)
+        total_months = total_years * 12
+    else:
+        total_months = 0
+
     return round(total_months / 12, 2), total_months
 
 def extract_education_level(t):
