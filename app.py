@@ -21,14 +21,14 @@ html, body, [class*="css"] {
     color: #d4d8e8;
 }
 
-.block-container {
-    padding-top: 0 !important;
-    padding-bottom: 3rem !important;
-    max-width: 1240px !important;
+header[data-testid="stHeader"] {
+    display: none !important;
 }
 
-section[data-testid="stAppViewContainer"] > .main > .block-container {
-    padding-top: 0 !important;
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1240px !important;
 }
 
 /* ── HEADER BAND ── */
