@@ -159,7 +159,7 @@ def score_candidates(df, jd, skills, embedder):
     exp_norm = df.apply(
         lambda r: normalize_experience(
             r.get("years_experience", 0) or 0,
-            r.get("domain", jd_domain)
+            jd_domain
         ), axis=1
     )
 
