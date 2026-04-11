@@ -75,8 +75,8 @@ WEIGHT_PROFILES = {
     },
     # Legal — qualification + experience critical; semantic match matters
     "legal": {
-        "similarity": 0.28, "skills": 0.20, "rarity": 0.08,
-        "experience": 0.25, "education": 0.12, "recency": 0.05, "cgpa": 0.02,
+        "similarity": 0.25, "skills": 0.20, "rarity": 0.08,
+        "experience": 0.30, "education": 0.12, "recency": 0.05, "cgpa": 0.02,
     },
     "business": {
         "similarity": 0.35, "skills": 0.20, "rarity": 0.08,
