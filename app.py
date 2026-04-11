@@ -58,7 +58,7 @@ if "scores" in st.session_state:
         except Exception:
             return ""
 
-    st.dataframe(df_show.style.applymap(color_cgpa, subset=["cgpa"] if "cgpa" in df_show.columns else []))
+    st.dataframe(df_show.style.map(color_cgpa, subset=["cgpa"] if "cgpa" in df_show.columns else []))
 
     cols_to_drop = [c for c in ["embedding", "jd_embedding", "raw_text"] if c in scores.columns]
     st.download_button(
