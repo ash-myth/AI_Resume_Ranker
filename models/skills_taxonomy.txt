@@ -353,6 +353,56 @@ bar council
 advocate
 solicitor
 
+# ── Senior Litigation & Counsel Level ─────────────────────────────
+lead counsel
+senior counsel
+general counsel
+chief legal officer
+litigation strategy
+trial strategy
+appellate advocacy
+federal court
+supreme court
+high court
+district court
+appellate court
+multi jurisdiction litigation
+complex litigation
+commercial disputes
+class action
+class action defense
+government investigations
+regulatory investigations
+internal investigations
+white collar crime
+corporate investigations
+litigation management
+case management
+legal leadership
+legal strategy
+outside counsel management
+dispute resolution strategy
+risk mitigation
+risk management legal
+corporate governance
+board advisory
+executive advisory
+legal operations
+global legal operations
+cross border litigation
+international arbitration
+billion dollar litigation
+high stakes litigation
+antitrust litigation
+securities litigation
+corporate restructuring
+ipo legal
+private equity legal
+mergers litigation
+shareholder disputes
+regulatory enforcement
+compliance investigations
+
 # ── Marketing & Growth ─────────────────────────────────────────────
 digital marketing
 seo
