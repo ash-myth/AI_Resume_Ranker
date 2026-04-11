@@ -22,9 +22,13 @@ html, body, [class*="css"] {
 }
 
 .block-container {
-    padding-top: 1rem !important;
+    padding-top: 0 !important;
     padding-bottom: 3rem !important;
-    max-width: 1240px;
+    max-width: 1240px !important;
+}
+
+section[data-testid="stAppViewContainer"] > .main > .block-container {
+    padding-top: 0 !important;
 }
 
 /* ── HEADER BAND ── */
@@ -33,6 +37,7 @@ html, body, [class*="css"] {
     border: 1px solid #1c2038;
     border-radius: 14px;
     padding: 1.4rem 1.8rem;
+    margin-top: 1rem;
     margin-bottom: 2rem;
     display: flex;
     align-items: center;
