@@ -33,9 +33,9 @@ def _parse_to_month_year(token):
 def extract_years_of_experience(text):
     text = text.lower()
     ranges = re.findall(
-        r"([A-Za-z]{3,9}\s+\d{4}|\d{1,2}/\d{4}|\d{1,2}/\d{1,2}/\d{4}|present|current|now)"
+        r"((?:[A-Za-z]{3,9}\s+\d{4})|(?:\d{4})|\d{1,2}/\d{4}|\d{1,2}/\d{1,2}/\d{4}|present|current|now)"
         r"\s*(?:-|to|–|—|\s)\s*"
-        r"([A-Za-z]{3,9}\s+\d{4}|\d{1,2}/\d{4}|\d{1,2}/\d{1,2}/\d{4}|present|current|now)",
+        r"((?:[A-Za-z]{3,9}\s+\d{4})|(?:\d{4})|\d{1,2}/\d{4}|\d{1,2}/\d{1,2}/\d{4}|present|current|now)",
         text, flags=re.I
     )
     total_months = 0
