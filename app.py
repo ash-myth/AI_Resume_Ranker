@@ -22,19 +22,20 @@ html, body, [class*="css"] {
 }
 
 .block-container {
-    padding-top: 0 !important;
+    padding-top: 1rem !important;
     padding-bottom: 3rem !important;
     max-width: 1240px;
 }
 
 /* ── HEADER BAND ── */
 .riq-header {
-    background: linear-gradient(135deg, #0d1020 0%, #111628 100%);
-    border-bottom: 1px solid #1c2038;
-    padding: 1.8rem 2.4rem 1.6rem;
-    margin: -1rem -1rem 2.4rem -1rem;
+    background: #0d1120;
+    border: 1px solid #1c2038;
+    border-radius: 14px;
+    padding: 1.4rem 1.8rem;
+    margin-bottom: 2rem;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: 1rem;
 }
