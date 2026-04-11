@@ -1,20 +1,57 @@
+# ── Programming Languages ──────────────────────────────────────────
 python
 java
 c
 c++
 javascript
 typescript
+r
+scala
+go
+ruby
+php
+swift
+kotlin
+matlab
+bash
+shell scripting
+vba
+
+# ── Web & Frontend ─────────────────────────────────────────────────
 html
 css
+react
+angular
+vue
+node.js
+next.js
+tailwind
+bootstrap
+jquery
+wordpress
+shopify
+webflow
+sass
+webpack
 
+# ── Databases ──────────────────────────────────────────────────────
 sql
 mysql
 postgresql
 mongodb
 nosql
+redis
+cassandra
+sqlite
+oracle
+bigquery
+snowflake
+databricks
 
+# ── Data Science & Analytics ───────────────────────────────────────
 pandas
 numpy
+scipy
 scikit-learn
 statsmodels
 matplotlib
@@ -23,28 +60,79 @@ plotly
 excel
 power bi
 tableau
+looker
+google analytics
+mixpanel
+eda
+feature engineering
+hyperparameter tuning
+model evaluation
+a/b testing
+hypothesis testing
+statistics
+probability
+regression
+classification
+clustering
+time series
+arima
+seasonality
+forecasting
+anomaly detection
+data cleaning
+data wrangling
+data pipeline
+data modeling
+data warehousing
+etl
+data engineering
+apache spark
+hadoop
+kafka
+airflow
+dbt
 
+# ── Machine Learning ───────────────────────────────────────────────
 xgboost
 lightgbm
 catboost
-regression
 random forest
 svm
 knn
 decision trees
 pca
 kmeans
+gradient boosting
+bagging
+ensemble methods
+cross validation
+mlops
+model deployment
+feature selection
+dimensionality reduction
 
+# ── Deep Learning ──────────────────────────────────────────────────
 tensorflow
 pytorch
 keras
+cnn
+rnn
+lstm
+transformer
+resnet
+vgg
+yolo
+computer vision
+opencv
+image classification
+object detection
 
+# ── NLP & GenAI ────────────────────────────────────────────────────
 nlp
 text preprocessing
 tfidf
 word2vec
 glove
-transformers
 bert
 gpt
 huggingface
@@ -53,52 +141,559 @@ genai
 prompt engineering
 langchain
 rag
+named entity recognition
+sentiment analysis
+text classification
+summarization
+embeddings
 
-computer vision
-opencv
-cnn
-resnet
-vgg
-yolo
-
+# ── Cloud & DevOps ─────────────────────────────────────────────────
+aws
+azure
+gcp
+docker
+kubernetes
+git
+github
+linux
+ci/cd
+devops
+terraform
+mlflow
+streamlit
 flask
 fastapi
 django
 rest api
+microservices
+serverless
 
-git
-github
-linux
-bash
-docker
-
-aws
-azure
-gcp
-
-airflow
-kafka
-spark
-hadoop
-data engineering
-etl
-eda
-feature engineering
-hyperparameter tuning
-model evaluation
-mlops
-devops
-
-statistics
-probability
-a/b testing
-hypothesis testing
-time series
-arima
-seasonality
-
-oops
-dsa
-system design
-software testing
+# ── Business & Management ──────────────────────────────────────────
+project management
 agile
+scrum
+kanban
+jira
+confluence
+stakeholder management
+business analysis
+requirements gathering
+process improvement
+change management
+risk management
+strategic planning
+business development
+consulting
+operations management
+supply chain
+logistics
+procurement
+vendor management
+business strategy
+corporate strategy
+market entry
+competitive analysis
+benchmarking
+feasibility study
+business case
+kpi
+okr
+balanced scorecard
+six sigma
+lean management
+total quality management
+iso certification
+p&l management
+ebitda
+cost optimisation
+revenue growth
+go to market
+business transformation
+
+# ── Finance & Accounting ───────────────────────────────────────────
+financial analysis
+financial modeling
+valuation
+dcf
+excel modeling
+accounting
+bookkeeping
+budgeting
+forecasting
+p&l management
+cost analysis
+variance analysis
+investment analysis
+equity research
+portfolio management
+risk analysis
+derivatives
+fixed income
+bloomberg
+capital markets
+corporate finance
+mergers and acquisitions
+due diligence
+financial reporting
+financial statements
+balance sheet
+income statement
+cash flow statement
+ratio analysis
+fund accounting
+treasury management
+forex management
+hedging
+working capital management
+accounts payable
+accounts receivable
+bank reconciliation
+general ledger
+journal entries
+tally
+sap fico
+oracle financials
+zoho books
+quickbooks
+xero
+tax planning
+income tax
+gst
+tds
+transfer pricing
+indirect tax
+direct tax
+tax compliance
+tax audit
+statutory audit
+internal audit
+concurrent audit
+bank audit
+revenue audit
+cost audit
+ifrs
+ind as
+us gaap
+as standards
+icai
+company law
+companies act
+rbi regulations
+sebi regulations
+fema
+fixed assets
+depreciation
+inventory valuation
+cost accounting
+management accounting
+standard costing
+activity based costing
+cfa
+ca
+cpa
+acca
+cma
+frm
+chartered accountant
+certified public accountant
+actuarial
+insurance underwriting
+claims management
+reinsurance
+actuarial science
+
+# ── Legal & Compliance ─────────────────────────────────────────────
+contract drafting
+contract review
+contract negotiation
+legal research
+legal writing
+litigation
+arbitration
+mediation
+corporate law
+company law
+intellectual property
+patent filing
+trademark registration
+copyright law
+mergers and acquisitions law
+due diligence legal
+regulatory compliance
+gdpr
+data privacy
+cyber law
+employment law
+labour law
+competition law
+antitrust
+banking law
+securities law
+real estate law
+land acquisition
+conveyancing
+criminal law
+civil law
+constitutional law
+administrative law
+legal drafting
+pleadings
+affidavits
+power of attorney
+mou drafting
+legal notices
+court appearances
+westlaw
+manupatra
+legal aid
+public interest litigation
+llb
+llm
+bar council
+advocate
+solicitor
+
+# ── Marketing & Growth ─────────────────────────────────────────────
+digital marketing
+seo
+sem
+google ads
+facebook ads
+social media marketing
+content marketing
+email marketing
+crm
+salesforce
+hubspot
+marketing analytics
+growth hacking
+brand management
+market research
+consumer insights
+product marketing
+campaign management
+conversion optimization
+customer acquisition
+retention
+affiliate marketing
+influencer marketing
+programmatic advertising
+media buying
+media planning
+pr management
+public relations
+press releases
+event management
+sponsorship management
+trade marketing
+shopper marketing
+category management
+customer lifecycle
+marketing automation
+mailchimp
+klaviyo
+hootsuite
+buffer
+canva
+adobe creative suite
+video marketing
+youtube marketing
+podcast marketing
+community management
+brand identity
+brand guidelines
+copywriting
+creative strategy
+advertising
+atl marketing
+btl marketing
+
+# ── Sales ──────────────────────────────────────────────────────────
+sales
+b2b sales
+b2c sales
+lead generation
+cold calling
+account management
+client relationship
+negotiation
+pipeline management
+revenue growth
+quota achievement
+sales strategy
+enterprise sales
+saas sales
+channel sales
+distribution management
+dealer management
+retail sales
+inside sales
+field sales
+key account management
+upselling
+cross selling
+sales forecasting
+crm management
+sales operations
+bid management
+rfp management
+tender management
+presales
+solution selling
+consultative selling
+
+# ── HR & Talent ────────────────────────────────────────────────────
+recruitment
+talent acquisition
+sourcing
+interviewing
+onboarding
+performance management
+employee engagement
+hris
+workday
+hr analytics
+compensation
+benefits
+learning and development
+organizational development
+workforce planning
+payroll
+payroll processing
+hr compliance
+labour law compliance
+employee relations
+grievance handling
+disciplinary action
+exit management
+hr policies
+hr operations
+talent management
+succession planning
+campus recruitment
+lateral hiring
+executive search
+employer branding
+diversity and inclusion
+employee wellness
+hr business partner
+organizational design
+job evaluation
+salary benchmarking
+culture building
+
+# ── Product Management ─────────────────────────────────────────────
+product management
+product roadmap
+user research
+wireframing
+prototyping
+figma
+user experience
+ux design
+ui design
+product analytics
+okrs
+kpis
+go to market
+prioritization
+product strategy
+customer journey
+product discovery
+competitive research
+mvp
+sprint planning
+product metrics
+retention analysis
+funnel analysis
+cohort analysis
+feature prioritization
+stakeholder alignment
+product requirements
+prd
+brd
+
+# ── Supply Chain & Operations ──────────────────────────────────────
+supply chain management
+logistics
+procurement
+inventory management
+warehouse management
+demand planning
+supply planning
+vendor management
+supplier development
+sourcing strategy
+category management supply
+import export
+customs clearance
+freight forwarding
+3pl management
+last mile delivery
+fleet management
+cold chain
+erp
+sap scm
+oracle scm
+ariba
+lean manufacturing
+six sigma operations
+kaizen
+5s
+production planning
+capacity planning
+quality control
+quality assurance
+iso 9001
+total productive maintenance
+plant operations
+manufacturing operations
+factory management
+
+# ── Healthcare & Clinical ──────────────────────────────────────────
+clinical research
+clinical trials
+gcp
+fda regulations
+drug safety
+pharmacovigilance
+medical writing
+regulatory affairs
+medical devices
+hospital management
+healthcare administration
+patient care
+nursing
+pharmacy
+public health
+epidemiology
+biostatistics
+spss
+sas clinical
+ehr systems
+medical coding
+icd 10
+cpt coding
+health informatics
+mbbs
+md
+bpharm
+mpharm
+physiotherapy
+radiology
+pathology
+telemedicine
+
+# ── Education & Training ───────────────────────────────────────────
+curriculum development
+instructional design
+lesson planning
+e-learning
+lms
+moodle
+teaching
+training delivery
+facilitation
+coaching
+mentoring
+academic research
+content development education
+assessment design
+pedagogy
+edtech
+
+# ── Consulting ────────────────────────────────────────────────────
+management consulting
+strategy consulting
+financial consulting
+it consulting
+operations consulting
+change management consulting
+process consulting
+digital transformation
+enterprise architecture
+business process reengineering
+programme management
+pmo
+mece framework
+hypothesis driven
+slide writing
+executive presentations
+client management consulting
+engagement management
+thought leadership
+
+# ── Soft Skills & General ──────────────────────────────────────────
+communication
+leadership
+teamwork
+problem solving
+critical thinking
+presentation
+writing
+documentation
+research
+mentoring
+coaching
+cross functional collaboration
+analytical thinking
+attention to detail
+time management
+multitasking
+stakeholder communication
+executive communication
+people management
+team management
+conflict resolution
+
+# ── CS Fundamentals ────────────────────────────────────────────────
+dsa
+oops
+system design
+dbms
+operating systems
+computer networks
+software testing
+algorithms
+data structures
+design patterns
+api design
+
+# ── Certifications & Tools ─────────────────────────────────────────
+aws certified
+azure certified
+google certified
+pmp
+cfa
+cpa
+six sigma
+tableau certified
+power bi certified
+tensorflow certified
+jupyter
+latex
+beautifulsoup
+selenium
+scrapy
+postman
+microsoft office
+ms office
+powerpoint
+word
+outlook
+google workspace
+gsuite
+slack
+zoom
+microsoft teams
+notion
+asana
+trello
+monday
+sap
+oracle erp
+ms dynamics
+zoho crm
+freshworks
+zendesk
+servicenow
