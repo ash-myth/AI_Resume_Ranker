@@ -131,8 +131,6 @@ def extract_education_level(t):
     for p in diploma_patterns:
         if re.search(p, t_l): return "Diploma"
     return "Other"
-
-
 def extract_cgpa(t):
     t = t.lower()
     patterns = [
@@ -198,13 +196,6 @@ def recency_score(text):
     elif gap == 2: return 0.75
     elif gap <= 4: return 0.6
     return 0.45
-# ── Domain Detection ───────────────────────────────────────────────────────────
-# Signal weights:
-#   3 = role-title / qualification level — near-impossible to misfire
-#   2 = strong domain indicator — may appear in 1-2 adjacent domains
-#   1 = supporting signal — generic, used only to break ties
-#
-# Whole-word regex matching used in detect_domain() to prevent partial hits.
 DOMAIN_SIGNALS = {
 
     "web_development": [
@@ -452,8 +443,6 @@ def detect_domain(text):
         return "general"
 
     return max(scores, key=scores.get)
-
-
 EXP_CAPS = {
     "web_development":    2,
     "data_science":       2,
@@ -480,10 +469,7 @@ EXP_CAPS = {
 def normalize_experience(years, domain="general"):
     cap = EXP_CAPS.get(domain, 10)
     return min(years / cap, 1.0)
-
-
 from core.skill_extractor import build_skill_index, extract_skills_whitelist
-
 def extract_profile(t, skills):
     t = clean_text(t)
     yrs, months  = extract_years_of_experience(t)
@@ -492,10 +478,8 @@ def extract_profile(t, skills):
     cgpa         = extract_cgpa(t)
     rec          = recency_score(t)
     domain       = detect_domain(t)
-
     skill_idx    = build_skill_index(skills)
     skills_found = extract_skills_whitelist(t, skill_idx, n_max=4, fuzzy=False)
-
     return pd.Series({
         "clean_text":         t,
         "years_experience":   yrs,
