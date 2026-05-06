@@ -193,29 +193,34 @@ def score_candidates(df, jd, skills, embedder):
 def explain_candidate(row):
     jd_set = set(_norm(s) for s in row.get("jd_found_skills", []))
     domain_label = row.get("jd_domain", "general").replace("_", " ").title()
-    parts = [
-        f"**Detected Domain:** {domain_label}",
-        f"Similarity to Job Description: {row['jd_similarity']:.2f}",
-        f"Skill Coverage: {row['skill_coverage']:.2f}",
-        f"Experience: {row['months_experience']} months ({row['years_experience']:.2f} years)",
-        f"Education: {row.get('education', 'N/A')} (score: {row['edu_score']:.2f})",
-        f"Recency Score: {row['recency_score']:.2f}",
-    ]
+
     cgpa = row.get("cgpa")
-    parts.append(f"CGPA: {cgpa:.2f}" if cgpa and not pd.isna(cgpa) else "CGPA: not mentioned")
+    cgpa_str = f"{cgpa:.2f}" if cgpa and not pd.isna(cgpa) else "not mentioned"
 
     all_sk = row.get("skills_found", [])
-    view = [
-        f"<span style='color:#4ade80;font-weight:600'>{s}</span>"
-        if _norm(s) in jd_set else s
-        for s in all_sk
+    skill_chips = []
+    for s in all_sk:
+        if _norm(s) in jd_set:
+            skill_chips.append(f"<span style='color:#4ade80;font-weight:600'>{s}</span>")
+        else:
+            skill_chips.append(f"<span style='color:#9aa8d0'>{s}</span>")
+
+    missing = row.get("jd_missing_skills", [])
+    missing_str = ", ".join(missing) if missing else "None — full coverage!"
+
+    lines = [
+        f"<p><strong>Detected Domain:</strong> {domain_label}</p>",
+        f"<p>Similarity to Job Description: {row['jd_similarity']:.2f}</p>",
+        f"<p>Skill Coverage: {row['skill_coverage']:.2f}</p>",
+        f"<p>Experience: {row['months_experience']} months ({row['years_experience']:.2f} years)</p>",
+        f"<p>Education: {row.get('education', 'N/A')} (score: {row['edu_score']:.2f})</p>",
+        f"<p>Recency Score: {row['recency_score']:.2f}</p>",
+        f"<p>CGPA: {cgpa_str}</p>",
+        "<hr style='border-color:#1a1e30;margin:0.8rem 0'>",
+        "<p><strong>Matched Skills (green = JD match):</strong></p>",
+        "<p>" + (", ".join(skill_chips) if skill_chips else "None detected") + "</p>",
+        "<hr style='border-color:#1a1e30;margin:0.8rem 0'>",
+        "<p><strong>Missing Skills for this Role:</strong></p>",
+        f"<p style='color:#f87171'>{missing_str}</p>",
     ]
-    parts += [
-        "",
-        "**Matched Skills (green = JD match):**",
-        ", ".join(view) if view else "None detected",
-        "",
-        "**Missing Skills for this Role:**",
-        ", ".join(row.get("jd_missing_skills", [])) or "None — full coverage!",
-    ]
-    return "\n".join(parts)
+    return "\n".join(lines)
