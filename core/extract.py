@@ -3,57 +3,198 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
+
+# ─────────────────────────────────────────────
+#  TEXT CLEANING
+# ─────────────────────────────────────────────
+
 def clean_text(t):
     t = re.sub(r"[#\*•◆▪▸►\-–—]{2,}", " ", t)   # decorative separators / bullets
     t = re.sub(r"\s+", " ", t)
     return t.strip()
 
+
+# ─────────────────────────────────────────────
+#  MONTH LOOKUP
+# ─────────────────────────────────────────────
+
 MONTHS = {
-    "jan":1,"january":1,"feb":2,"february":2,"mar":3,"march":3,
-    "apr":4,"april":4,"may":5,"jun":6,"june":6,"jul":7,"july":7,
-    "aug":8,"august":8,"sep":9,"sept":9,"september":9,
-    "oct":10,"october":10,"nov":11,"november":11,"dec":12,"december":12
+    "jan": 1, "january": 1,
+    "feb": 2, "february": 2,
+    "mar": 3, "march": 3,
+    "apr": 4, "april": 4,
+    "may": 5,
+    "jun": 6, "june": 6,
+    "jul": 7, "july": 7,
+    "aug": 8, "august": 8,
+    "sep": 9, "sept": 9, "september": 9,
+    "oct": 10, "october": 10,
+    "nov": 11, "november": 11,
+    "dec": 12, "december": 12,
 }
 
+
+# ─────────────────────────────────────────────
+#  CONTEXT CLASSIFIERS  (used by experience extractor)
+# ─────────────────────────────────────────────
+
+# Keywords that suggest a date-range belongs to education, NOT work
+_EDU_HEADERS = re.compile(
+    r"\b(education|b\.?tech|b\.?e\.?|bachelor|secondary|senior\s+secondary|"
+    r"high\s+school|college|university|school|class\s+x|class\s+xii|"
+    r"icse|cbse|hbse|10th|12th|pursuing|semester|sgpa|cgpa|graduation|"
+    r"undergraduate|diploma|polytechnic)\b",
+    re.I,
+)
+
+# Keywords that suggest a date-range belongs to actual work / internship
+_WORK_SIGNALS = re.compile(
+    r"\b(intern|internship|experience|work|employ|role|position|"
+    r"analyst|engineer|developer|manager|consultant|associate|"
+    r"officer|director|executive|project|trainee|apprentice)\b",
+    re.I,
+)
+
+
+# ─────────────────────────────────────────────
+#  DATE TOKEN PARSER
+# ─────────────────────────────────────────────
+
 def _parse_to_month_year(token):
+    """
+    Convert a date token string to (year, month).
+
+    FIX (vs original):
+      - Month-name match now validates the word is actually in MONTHS dict,
+        so tokens like "science 2023" can no longer slip through.
+      - Bare-year match uses re.fullmatch so it only fires when the *entire*
+        token is a 4-digit year (not a suffix of a longer word/number).
+    """
     token = token.lower().strip()
-    if token in ["present", "current", "now"]:
+
+    if token in ("present", "current", "now"):
         t = datetime.today()
         return t.year, t.month
-    m = re.match(r"([a-z]{3,9})\s+(\d{4})", token)
-    if m:
-        return int(m.group(2)), MONTHS.get(m.group(1), 1)
-    m = re.match(r"(\d{1,2})/(\d{1,2})/(\d{4})", token)
+
+    # "Jun 2024", "January 2023", etc.
+    m = re.match(r"([a-z]{3,9})\s+(\d{4})$", token)
+    if m and m.group(1) in MONTHS:
+        return int(m.group(2)), MONTHS[m.group(1)]
+
+    # "03/06/2025"  (DD/MM/YYYY)
+    m = re.match(r"(\d{1,2})/(\d{1,2})/(\d{4})$", token)
     if m:
         return int(m.group(3)), int(m.group(2))
-    m = re.match(r"(\d{1,2})/(\d{4})", token)
+
+    # "06/2025"  (MM/YYYY)
+    m = re.match(r"(\d{1,2})/(\d{4})$", token)
     if m:
         return int(m.group(2)), int(m.group(1))
-    m = re.match(r"(\d{4})", token)
+
+    # "2024"  (bare year — fullmatch so "2024abc" is rejected)
+    m = re.fullmatch(r"(\d{4})", token)
     if m:
         return int(m.group(1)), 1
+
     return None, None
 
+
+# ─────────────────────────────────────────────
+#  YEARS / MONTHS OF EXPERIENCE
+# ─────────────────────────────────────────────
+
 def extract_years_of_experience(text):
-    text = text.lower()
-    ranges = re.findall(
-        r"((?:[A-Za-z]{3,9}\s+\d{4})|(?:\d{4})|\d{1,2}/\d{4}|\d{1,2}/\d{1,2}/\d{4}|present|current|now)"
-        r"\s*(?:-|to|–|—|\s)\s*"
-        r"((?:[A-Za-z]{3,9}\s+\d{4})|(?:\d{4})|\d{1,2}/\d{4}|\d{1,2}/\d{1,2}/\d{4}|present|current|now)",
-        text, flags=re.I
-    )
+    """
+    Parse work experience duration from resume text.
+
+    FIX (vs original):
+      1. Processes text LINE BY LINE so each match is evaluated with its
+         local context (the line above + the current line).
+      2. Bare-year spans like "2023 – 2027" are skipped unless a work-signal
+         keyword appears nearby — prevents education durations being counted.
+      3. End-years that are in the future are rejected (graduation years).
+      4. Duplicate/overlapping spans are deduplicated.
+      5. Only named months (Jan–Dec) are accepted as month-name tokens —
+         words like "science" can no longer accidentally match.
+    """
+    current_year = datetime.today().year
+    lines = text.splitlines()
     total_months = 0
+    seen_spans = []  # list of (start_abs_month, end_abs_month) to dedup
 
-    for start, end in ranges:
-        sy, sm = _parse_to_month_year(start)
-        ey, em = _parse_to_month_year(end)
+    DATE_TOKEN = (
+        r"((?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*"
+        r"\s+\d{4})"           # "Jun 2024"
+        r"|\d{1,2}/\d{1,2}/\d{4}"  # "03/06/2025"
+        r"|\d{1,2}/\d{4}"          # "06/2025"
+        r"|present|current|now)"   # open-ended
+    )
 
-        if sy and ey:
-            span_months = (ey - sy) * 12 + (em - sm)
-            if 0 < span_months <= 600:  # sanity cap: 50 years
-                total_months += span_months
+    # Bare-year-only ranges handled separately (with context check)
+    BARE_YEAR_RANGE_RE = re.compile(
+        r"\b(\d{4})\s*(?:-|to|–|—)\s*(\d{4})\b", re.I
+    )
+    NAMED_RANGE_RE = re.compile(
+        DATE_TOKEN + r"\s*(?:-|to|–|—)\s*" + DATE_TOKEN, re.I
+    )
+
+    for i, line in enumerate(lines):
+        # Context = previous line + current line (lower-cased)
+        context = " ".join(lines[max(0, i - 1): i + 1]).lower()
+
+        # ── Named-month ranges (most reliable) ───────────────────────────
+        for m in NAMED_RANGE_RE.finditer(line):
+            start_tok, end_tok = m.group(1), m.group(2)
+            sy, sm = _parse_to_month_year(start_tok)
+            ey, em = _parse_to_month_year(end_tok)
+            if not (sy and ey):
+                continue
+
+            # Reject future end-dates (e.g. graduation "Jul 2027")
+            if ey > current_year and end_tok.lower() not in ("present", "current", "now"):
+                continue
+
+            span = (ey - sy) * 12 + (em - sm)
+            if span <= 0 or span > 600:
+                continue
+
+            abs_start = sy * 12 + sm
+            abs_end   = ey * 12 + em
+            if any(a <= abs_start and abs_end <= b for a, b in seen_spans):
+                continue
+            seen_spans.append((abs_start, abs_end))
+            total_months += span
+
+        # ── Bare-year ranges (need context check) ────────────────────────
+        for m in BARE_YEAR_RANGE_RE.finditer(line):
+            sy, sm = int(m.group(1)), 1
+            ey, em = int(m.group(2)), 1
+
+            # Skip future end-years (graduation, expected completion)
+            if ey > current_year:
+                continue
+
+            # Skip if context looks like education and NOT work
+            if _EDU_HEADERS.search(context) or not _WORK_SIGNALS.search(context):
+                continue
+
+            span = (ey - sy) * 12
+            if span <= 0 or span > 600:
+                continue
+
+            abs_start = sy * 12 + sm
+            abs_end   = ey * 12 + em
+            if any(a <= abs_start and abs_end <= b for a, b in seen_spans):
+                continue
+            seen_spans.append((abs_start, abs_end))
+            total_months += span
 
     return round(total_months / 12, 2), total_months
+
+
+# ─────────────────────────────────────────────
+#  EDUCATION LEVEL
+# ─────────────────────────────────────────────
 
 def extract_education_level(t):
     """
@@ -68,19 +209,18 @@ def extract_education_level(t):
         r"ph\.?\s*d", r"doctor(?:ate)?", r"doctoral",
         r"d\.?\s*sc\b", r"d\.?\s*litt\b",
     ]
-
     professional_patterns = [
         r"\bca\s+(?:final|qualified|inter|rank|foundation)\b",
         r"\bchartered\s+accountant\b",
         r"\bicai\b",
-        r"\bcfa\b",                         
-        r"\bcpa\b",                         
-        r"\bacca\b",                      
-        r"\bcma\b",                         
-        r"\bfrm\b",                        
-        r"\bcs\s+(?:final|qualified|inter)\b",  
+        r"\bcfa\b",
+        r"\bcpa\b",
+        r"\bacca\b",
+        r"\bcma\b",
+        r"\bfrm\b",
+        r"\bcs\s+(?:final|qualified|inter)\b",
         r"\bcompany\s+secretary\b",
-        r"\bfca\b",                         
+        r"\bfca\b",
         r"\bllm\b", r"master\s+of\s+laws",
         r"\bmba\b", r"m\.?\s*b\.?\s*a",
         r"\bm\.?\s*tech\b", r"\bm\s*tech\b",
@@ -89,43 +229,51 @@ def extract_education_level(t):
         r"\bm\.?\s*a\.?\b",
         r"\bmca\b",
         r"\bpgdm\b", r"\bpgdba\b", r"\bpgpm\b",
-        r"post\s*graduate",  r"pg\s+program",
+        r"post\s*graduate", r"pg\s+program",
         r"\bmaster\b",
         r"\bm\.?\s*phil\b",
     ]
-
     bachelor_patterns = [
         r"\bb\.?\s*tech\b", r"\bb\s*tech\b",
         r"\bb\.?\s*e\.?\b",
         r"\bllb\b", r"bachelor\s+of\s+laws",
-        r"\bmbbs\b",                      
+        r"\bmbbs\b",
         r"\bb\.?\s*pharm\b", r"\bbpharm\b",
         r"\bb\.?\s*sc\b", r"\bbsc\b",
         r"\bb\.?\s*com\b", r"\bbcom\b",
         r"\bb\.?\s*b\.?\s*a\b", r"\bbba\b",
         r"\bb\.?\s*a\.?\b",
         r"\bbca\b",
-        r"\bbds\b",                    
+        r"\bbds\b",
         r"\bbnys\b",
         r"\bbam\b",
         r"bachelor", r"undergraduate",
         r"ug\s+program", r"\bgraduat(?:ion|ed)\b",
     ]
-
     diploma_patterns = [
         r"\bdiploma\b", r"\bpoly(?:technic)?\b",
         r"\bitc\b", r"\biti\b",
     ]
 
     for p in phd_patterns:
-        if re.search(p, t_l): return "PhD"
+        if re.search(p, t_l):
+            return "PhD"
     for p in professional_patterns:
-        if re.search(p, t_l): return "Masters"
+        if re.search(p, t_l):
+            return "Masters"
     for p in bachelor_patterns:
-        if re.search(p, t_l): return "Bachelors"
+        if re.search(p, t_l):
+            return "Bachelors"
     for p in diploma_patterns:
-        if re.search(p, t_l): return "Diploma"
+        if re.search(p, t_l):
+            return "Diploma"
     return "Other"
+
+
+# ─────────────────────────────────────────────
+#  CGPA EXTRACTION
+# ─────────────────────────────────────────────
+
 def extract_cgpa(t):
     t = t.lower()
     patterns = [
@@ -146,26 +294,68 @@ def extract_cgpa(t):
     return None
 
 
+# ─────────────────────────────────────────────
+#  CONTACT EXTRACTION  (email + phone)
+# ─────────────────────────────────────────────
+
 def extract_contacts(text):
+    """
+    Extract email and Indian mobile number from resume text.
+
+    FIX (vs original):
+      - Phone extraction now uses a proper regex that strips the +91 / 91 / 0
+        country-code prefix before selecting the 10-digit number.
+      - The original code extracted digits blindly and took the first 10-digit
+        window starting with 6-9, which caused "+91-8481…" to yield "9184…"
+        (the leading "91" shifted the window by 2 digits).
+    """
     import unicodedata
+
     t = unicodedata.normalize("NFKC", text)
     t = t.replace("\u00A0", " ")
     t = re.sub(r"[^\x00-\x7F]", " ", t)
     t = re.sub(r"\s+", " ", t).strip()
 
+    # ── Email ─────────────────────────────────────────────────────────────
     m = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", t)
     if m:
         email = m.group(0)
     else:
+        # fallback: remove spaces and retry (handles space-broken emails in PDFs)
         compressed = re.sub(r"[^A-Za-z0-9@._+-]", "", re.sub(r"\s+", "", text))
         m2 = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", compressed)
         email = m2.group(0) if m2 else ""
 
-    digits = re.sub(r"\D", "", text)
-    candidates = [digits[i:i+10] for i in range(len(digits) - 9) if digits[i] in "6789"]
-    phone = candidates[0] if candidates else ""
+    # ── Phone ─────────────────────────────────────────────────────────────
+    # Strategy: regex that explicitly handles +91 / 91 / 0 prefixes so the
+    # 10-digit core is always captured in group 1.
+    phone = ""
+    # Remove spaces and hyphens only for the phone search pass
+    search_text = re.sub(r"[\s\-]", "", text)
+    m3 = re.search(r"(?:(?:\+|00)?91)?([6-9]\d{9})", search_text)
+    if m3:
+        phone = m3.group(1)
+
+    if not phone:
+        # Fallback: strip digits, handle CC manually, pick first valid window
+        digits = re.sub(r"\D", "", text)
+        if len(digits) >= 12 and digits[:2] == "91":
+            digits = digits[2:]
+        elif len(digits) >= 11 and digits[0] == "0":
+            digits = digits[1:]
+        candidates = [
+            digits[i: i + 10]
+            for i in range(len(digits) - 9)
+            if digits[i] in "6789"
+        ]
+        phone = candidates[0] if candidates else ""
+
     return email, phone
 
+
+# ─────────────────────────────────────────────
+#  RECENCY SCORE
+# ─────────────────────────────────────────────
 
 def recency_score(text):
     current_year = datetime.today().year
@@ -175,7 +365,7 @@ def recency_score(text):
         r"data|ml|ai|analyst|manager|consultant|engineer|developer|executive|"
         r"associate|officer|director|partner|advocate|auditor|accountant|doctor)"
         r"[\s\S]{0,40}?(20\d{2})",
-        text, flags=re.I
+        text, flags=re.I,
     )
     if matches:
         years = [int(y[1]) for y in matches]
@@ -185,12 +375,19 @@ def recency_score(text):
         if not years:
             return 0.6
         latest = max(years)
+
     gap = current_year - latest
     if gap <= 0:   return 1.0
     elif gap == 1: return 0.9
     elif gap == 2: return 0.75
     elif gap <= 4: return 0.6
     return 0.45
+
+
+# ─────────────────────────────────────────────
+#  DOMAIN SIGNALS
+# ─────────────────────────────────────────────
+
 DOMAIN_SIGNALS = {
 
     "web_development": [
@@ -417,6 +614,10 @@ DOMAIN_SIGNALS = {
 }
 
 
+# ─────────────────────────────────────────────
+#  DOMAIN DETECTION
+# ─────────────────────────────────────────────
+
 def detect_domain(text):
     """
     Weighted domain detection with whole-word regex matching.
@@ -438,6 +639,12 @@ def detect_domain(text):
         return "general"
 
     return max(scores, key=scores.get)
+
+
+# ─────────────────────────────────────────────
+#  EXPERIENCE NORMALISATION
+# ─────────────────────────────────────────────
+
 EXP_CAPS = {
     "web_development":    2,
     "data_science":       2,
@@ -461,12 +668,21 @@ EXP_CAPS = {
     "general":            10,
 }
 
+
 def normalize_experience(years, domain="general"):
     cap = EXP_CAPS.get(domain, 10)
     return min(years / cap, 1.0)
+
+
+# ─────────────────────────────────────────────
+#  MASTER PROFILE EXTRACTOR
+# ─────────────────────────────────────────────
+
 from core.skill_extractor import build_skill_index, extract_skills_whitelist
+
+
 def extract_profile(t, skills):
-    t = clean_text(t)
+    t            = clean_text(t)
     yrs, months  = extract_years_of_experience(t)
     edu          = extract_education_level(t)
     email, phone = extract_contacts(t)
