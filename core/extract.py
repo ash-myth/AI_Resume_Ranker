@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 def clean_text(t):
+    t = re.sub(r"[#\*•◆▪▸►\-–—]{2,}", " ", t)   # decorative separators / bullets
     t = re.sub(r"\s+", " ", t)
     return t.strip()
 
@@ -41,22 +42,16 @@ def extract_years_of_experience(text):
         r"((?:[A-Za-z]{3,9}\s+\d{4})|(?:\d{4})|\d{1,2}/\d{4}|\d{1,2}/\d{1,2}/\d{4}|present|current|now)",
         text, flags=re.I
     )
-    start_years = []
-    end_years = []
+    total_months = 0
 
     for start, end in ranges:
         sy, sm = _parse_to_month_year(start)
         ey, em = _parse_to_month_year(end)
 
         if sy and ey:
-            start_years.append(sy)
-            end_years.append(ey)
-
-    if start_years and end_years:
-        total_years = max(end_years) - min(start_years)
-        total_months = total_years * 12
-    else:
-        total_months = 0
+            span_months = (ey - sy) * 12 + (em - sm)
+            if 0 < span_months <= 600:  # sanity cap: 50 years
+                total_months += span_months
 
     return round(total_months / 12, 2), total_months
 
