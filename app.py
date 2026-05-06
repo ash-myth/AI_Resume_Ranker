@@ -455,4 +455,4 @@ if "scores" in st.session_state:
             st.plotly_chart(plot_radar(row), use_container_width=True)
 
         st.markdown("#### Analysis")
-        st.markdown(explain_candidate(row).replace("\n", "  \n"), unsafe_allow_html=True)
+        st.markdown(explain_candidate(row), unsafe_allow_html=True)
