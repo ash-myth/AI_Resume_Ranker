@@ -1,4 +1,4 @@
-# ── Programming Languages ──────────────────────────────────────────
+Programming Languages 
 python
 java
 c
@@ -17,7 +17,7 @@ bash
 shell scripting
 vba
 
-# ── Web & Frontend ─────────────────────────────────────────────────
+  Web & Frontend   
 html
 css
 react
@@ -34,7 +34,7 @@ webflow
 sass
 webpack
 
-# ── Databases ──────────────────────────────────────────────────────
+  Databases   ─────
 sql
 mysql
 postgresql
@@ -48,11 +48,11 @@ bigquery
 snowflake
 databricks
 
-# ── Data Science & Analytics ───────────────────────────────────────
+  Data Science & Analytics ───────────────────────────────────────
 pandas
 numpy
 scipy
-scikit-learn
+scikit learn
 statsmodels
 matplotlib
 seaborn
@@ -92,7 +92,7 @@ kafka
 airflow
 dbt
 
-# ── Machine Learning ───────────────────────────────────────────────
+  Machine Learning ───────────────────────────────────────────────
 xgboost
 lightgbm
 catboost
@@ -111,7 +111,7 @@ model deployment
 feature selection
 dimensionality reduction
 
-# ── Deep Learning ──────────────────────────────────────────────────
+  Deep Learning   ─
 tensorflow
 pytorch
 keras
@@ -127,7 +127,7 @@ opencv
 image classification
 object detection
 
-# ── NLP & GenAI ────────────────────────────────────────────────────
+  NLP & GenAI   ───
 nlp
 text preprocessing
 tfidf
@@ -147,7 +147,7 @@ text classification
 summarization
 embeddings
 
-# ── Cloud & DevOps ─────────────────────────────────────────────────
+  Cloud & DevOps   
 aws
 azure
 gcp
@@ -168,7 +168,7 @@ rest api
 microservices
 serverless
 
-# ── Business & Management ──────────────────────────────────────────
+  Business & Management ──────────────────────────────────────────
 project management
 agile
 scrum
@@ -210,7 +210,7 @@ revenue growth
 go to market
 business transformation
 
-# ── Finance & Accounting ───────────────────────────────────────────
+  Finance & Accounting ───────────────────────────────────────────
 financial analysis
 financial modeling
 valuation
@@ -302,7 +302,7 @@ claims management
 reinsurance
 actuarial science
 
-# ── Legal & Compliance ─────────────────────────────────────────────
+  Legal & Compliance ─────────────────────────────────────────────
 contract drafting
 contract review
 contract negotiation
@@ -353,7 +353,7 @@ bar council
 advocate
 solicitor
 
-# ── Senior Litigation & Counsel Level ─────────────────────────────
+  Senior Litigation & Counsel Level ─────────────────────────────
 lead counsel
 senior counsel
 general counsel
@@ -403,7 +403,7 @@ shareholder disputes
 regulatory enforcement
 compliance investigations
 
-# ── Marketing & Growth ─────────────────────────────────────────────
+  Marketing & Growth ─────────────────────────────────────────────
 digital marketing
 seo
 sem
@@ -458,7 +458,7 @@ advertising
 atl marketing
 btl marketing
 
-# ── Sales ──────────────────────────────────────────────────────────
+  Sales   ─────────
 sales
 b2b sales
 b2c sales
@@ -492,7 +492,7 @@ presales
 solution selling
 consultative selling
 
-# ── HR & Talent ────────────────────────────────────────────────────
+  HR & Talent   ───
 recruitment
 talent acquisition
 sourcing
@@ -532,7 +532,7 @@ job evaluation
 salary benchmarking
 culture building
 
-# ── Product Management ─────────────────────────────────────────────
+  Product Management ─────────────────────────────────────────────
 product management
 product roadmap
 user research
@@ -563,7 +563,7 @@ product requirements
 prd
 brd
 
-# ── Supply Chain & Operations ──────────────────────────────────────
+  Supply Chain & Operations ──────────────────────────────────────
 supply chain management
 logistics
 procurement
@@ -600,7 +600,7 @@ plant operations
 manufacturing operations
 factory management
 
-# ── Healthcare & Clinical ──────────────────────────────────────────
+  Healthcare & Clinical ──────────────────────────────────────────
 clinical research
 clinical trials
 gcp
@@ -634,11 +634,11 @@ radiology
 pathology
 telemedicine
 
-# ── Education & Training ───────────────────────────────────────────
+  Education & Training ───────────────────────────────────────────
 curriculum development
 instructional design
 lesson planning
-e-learning
+e learning
 lms
 moodle
 teaching
@@ -652,7 +652,7 @@ assessment design
 pedagogy
 edtech
 
-# ── Consulting ────────────────────────────────────────────────────
+  Consulting   ───
 management consulting
 strategy consulting
 financial consulting
@@ -673,7 +673,7 @@ client management consulting
 engagement management
 thought leadership
 
-# ── Soft Skills & General ──────────────────────────────────────────
+  Soft Skills & General ──────────────────────────────────────────
 communication
 leadership
 teamwork
@@ -696,7 +696,7 @@ people management
 team management
 conflict resolution
 
-# ── CS Fundamentals ────────────────────────────────────────────────
+  CS Fundamentals ────────────────────────────────────────────────
 dsa
 oops
 system design
@@ -709,7 +709,7 @@ data structures
 design patterns
 api design
 
-# ── Certifications & Tools ─────────────────────────────────────────
+  Certifications & Tools ─────────────────────────────────────────
 aws certified
 azure certified
 google certified
