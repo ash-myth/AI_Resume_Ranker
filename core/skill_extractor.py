@@ -206,6 +206,8 @@ def extract_skills_whitelist(text, skill_index, n_max=4, fuzzy=False):
     found = []
     seen = set()
     for g in _ngrams(toks, n_max=n_max):
+        if len(g) < 2:
+            continue
         if g in skill_index and g not in seen:
             seen.add(g)
             found.append(skill_index[g])
