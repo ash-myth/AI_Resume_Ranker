@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 def clean_text(t):
-    t = re.sub(r"[#\*•◆▪▸►\-–—]{2,}", " ", t)   # decorative separators / bullets
+    t = re.sub(r"[#\*•◆▪▸►\-–—]{2,}", " ", t)  
     t = re.sub(r"\s+", " ", t)
     return t.strip()
 
