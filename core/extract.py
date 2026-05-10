@@ -35,7 +35,7 @@ MONTHS = {
 
 
 # ─────────────────────────────────────────────
-#  CONTEXT CLASSIFIERS  (used by experience extractor)
+#  CONTEXT CLASSIFIERS
 # ─────────────────────────────────────────────
 
 # Keywords that suggest a date-range belongs to education, NOT work
@@ -47,11 +47,15 @@ _EDU_HEADERS = re.compile(
     re.I,
 )
 
-# Keywords that suggest a date-range belongs to actual work / internship
+# FIX 1: Added legal-domain work roles so bare-year ranges in legal resumes
+# like "Gibson Dunn | 2012 – Present / Senior Litigation Partner" are correctly
+# counted as work experience instead of being skipped.
 _WORK_SIGNALS = re.compile(
     r"\b(intern|internship|experience|work|employ|role|position|"
     r"analyst|engineer|developer|manager|consultant|associate|"
-    r"officer|director|executive|project|trainee|apprentice)\b",
+    r"officer|director|executive|project|trainee|apprentice|"
+    r"partner|attorney|counsel|advocate|prosecutor|solicitor|"
+    r"clerk|paralegal|deputy|general\s+counsel|legal\s+officer)\b",
     re.I,
 )
 
@@ -64,10 +68,10 @@ def _parse_to_month_year(token):
     """
     Convert a date token string to (year, month).
 
-    FIX (vs original):
-      - Month-name match now validates the word is actually in MONTHS dict,
-        so tokens like "science 2023" can no longer slip through.
-      - Bare-year match uses re.fullmatch so it only fires when the *entire*
+    Fixes vs original:
+      - Month-name match validates the word is actually in MONTHS dict,
+        so tokens like "science 2023" cannot slip through.
+      - Bare-year match uses re.fullmatch so it only fires when the entire
         token is a 4-digit year (not a suffix of a longer word/number).
     """
     token = token.lower().strip()
@@ -107,15 +111,16 @@ def extract_years_of_experience(text):
     """
     Parse work experience duration from resume text.
 
-    FIX (vs original):
-      1. Processes text LINE BY LINE so each match is evaluated with its
-         local context (the line above + the current line).
+    Fixes vs original:
+      1. Processes text LINE BY LINE with local context (line above + current)
+         so education spans are distinguished from work spans.
       2. Bare-year spans like "2023 – 2027" are skipped unless a work-signal
          keyword appears nearby — prevents education durations being counted.
-      3. End-years that are in the future are rejected (graduation years).
-      4. Duplicate/overlapping spans are deduplicated.
-      5. Only named months (Jan–Dec) are accepted as month-name tokens —
-         words like "science" can no longer accidentally match.
+      3. FIX 1 (legal resumes): _WORK_SIGNALS now includes legal-specific
+         roles so "2012 – Present / Partner" is correctly counted.
+      4. End-years in the future are rejected (graduation years).
+      5. Duplicate/overlapping spans are deduplicated.
+      6. Only validated month-names (Jan-Dec) are accepted as named tokens.
     """
     current_year = datetime.today().year
     lines = text.splitlines()
@@ -124,22 +129,20 @@ def extract_years_of_experience(text):
 
     DATE_TOKEN = (
         r"((?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*"
-        r"\s+\d{4})"           # "Jun 2024"
-        r"|\d{1,2}/\d{1,2}/\d{4}"  # "03/06/2025"
-        r"|\d{1,2}/\d{4}"          # "06/2025"
-        r"|present|current|now)"   # open-ended
+        r"\s+\d{4})"
+        r"|\d{1,2}/\d{1,2}/\d{4}"
+        r"|\d{1,2}/\d{4}"
+        r"|present|current|now)"
     )
 
-    # Bare-year-only ranges handled separately (with context check)
     BARE_YEAR_RANGE_RE = re.compile(
-        r"\b(\d{4})\s*(?:-|to|–|—)\s*(\d{4})\b", re.I
+        r"\b(\d{4})\s*(?:-|to|–|—)\s*(\d{4}|present|current|now)\b", re.I
     )
     NAMED_RANGE_RE = re.compile(
         DATE_TOKEN + r"\s*(?:-|to|–|—)\s*" + DATE_TOKEN, re.I
     )
 
     for i, line in enumerate(lines):
-        # Context = previous line + current line (lower-cased)
         context = " ".join(lines[max(0, i - 1): i + 1]).lower()
 
         # ── Named-month ranges (most reliable) ───────────────────────────
@@ -149,15 +152,11 @@ def extract_years_of_experience(text):
             ey, em = _parse_to_month_year(end_tok)
             if not (sy and ey):
                 continue
-
-            # Reject future end-dates (e.g. graduation "Jul 2027")
             if ey > current_year and end_tok.lower() not in ("present", "current", "now"):
                 continue
-
             span = (ey - sy) * 12 + (em - sm)
             if span <= 0 or span > 600:
                 continue
-
             abs_start = sy * 12 + sm
             abs_end   = ey * 12 + em
             if any(a <= abs_start and abs_end <= b for a, b in seen_spans):
@@ -167,22 +166,23 @@ def extract_years_of_experience(text):
 
         # ── Bare-year ranges (need context check) ────────────────────────
         for m in BARE_YEAR_RANGE_RE.finditer(line):
-            sy, sm = int(m.group(1)), 1
-            ey, em = int(m.group(2)), 1
+            sy = int(m.group(1))
+            end_tok = m.group(2).lower()
+            if end_tok in ("present", "current", "now"):
+                ey, em = current_year, datetime.today().month
+            else:
+                ey, em = int(end_tok), 1
+                if ey > current_year:
+                    continue
 
-            # Skip future end-years (graduation, expected completion)
-            if ey > current_year:
+            if _EDU_HEADERS.search(context) and not _WORK_SIGNALS.search(context):
                 continue
 
-            # Skip if context looks like education and NOT work
-            if _EDU_HEADERS.search(context) or not _WORK_SIGNALS.search(context):
-                continue
-
-            span = (ey - sy) * 12
+            span = (ey - sy) * 12 + (em - 1)
             if span <= 0 or span > 600:
                 continue
 
-            abs_start = sy * 12 + sm
+            abs_start = sy * 12
             abs_end   = ey * 12 + em
             if any(a <= abs_start and abs_end <= b for a, b in seen_spans):
                 continue
@@ -198,18 +198,30 @@ def extract_years_of_experience(text):
 
 def extract_education_level(t):
     """
-    Recognises: PhD, Masters (incl. MBA, MCA, LLM, M.Tech, M.Sc, PGDM),
-    Professional qualifications treated as Masters-equivalent
-    (CA, CFA, CPA, ACCA, CMA, FRM, MBBS, LLB, B.Pharm etc.),
-    Bachelors, and Diploma/Other.
+    Recognises: PhD, Masters (incl. MBA, MCA, LLM, M.Tech, M.Sc, PGDM,
+    Juris Doctor), Professional qualifications, Bachelors, Diploma/Other.
+
+    FIX 2: "Juris Doctor" was incorrectly matched as PhD because the pattern
+    `doctor(?:ate)?` contains the word "doctor". Fixed with a negative
+    lookbehind for "juris". "Juris Doctor" is now explicitly classified as
+    Masters (professional law degree).
+
+    FIX 2b: "BA LLB" pattern added to Bachelors so combined law degrees
+    like Ravi's are caught before the bare `r"\bb\.?\s*a"` fires.
     """
     t_l = t.lower()
 
     phd_patterns = [
-        r"ph\.?\s*d", r"doctor(?:ate)?", r"doctoral",
-        r"d\.?\s*sc\b", r"d\.?\s*litt\b",
+        r"ph\.?\s*d",
+        r"(?<!juris\s)doctor(?:ate)?",   # FIX 2: exclude "juris doctor"
+        r"doctoral",
+        r"d\.?\s*sc\b",
+        r"d\.?\s*litt\b",
     ]
+
+    # Juris Doctor / JD added as explicit Masters-level pattern
     professional_patterns = [
+        r"\bjuris\s+doctor\b", r"\bj\.?\s*d\.?\b",   # FIX 2
         r"\bca\s+(?:final|qualified|inter|rank|foundation)\b",
         r"\bchartered\s+accountant\b",
         r"\bicai\b",
@@ -233,9 +245,11 @@ def extract_education_level(t):
         r"\bmaster\b",
         r"\bm\.?\s*phil\b",
     ]
+
     bachelor_patterns = [
         r"\bb\.?\s*tech\b", r"\bb\s*tech\b",
         r"\bb\.?\s*e\.?\b",
+        r"\bba\s+llb\b",                              # FIX 2b: combined law degree
         r"\bllb\b", r"bachelor\s+of\s+laws",
         r"\bmbbs\b",
         r"\bb\.?\s*pharm\b", r"\bbpharm\b",
@@ -250,6 +264,7 @@ def extract_education_level(t):
         r"bachelor", r"undergraduate",
         r"ug\s+program", r"\bgraduat(?:ion|ed)\b",
     ]
+
     diploma_patterns = [
         r"\bdiploma\b", r"\bpoly(?:technic)?\b",
         r"\bitc\b", r"\biti\b",
@@ -300,14 +315,15 @@ def extract_cgpa(t):
 
 def extract_contacts(text):
     """
-    Extract email and Indian mobile number from resume text.
+    Extract email and phone number from resume text.
 
-    FIX (vs original):
-      - Phone extraction now uses a proper regex that strips the +91 / 91 / 0
-        country-code prefix before selecting the 10-digit number.
-      - The original code extracted digits blindly and took the first 10-digit
-        window starting with 6-9, which caused "+91-8481…" to yield "9184…"
-        (the leading "91" shifted the window by 2 digits).
+    FIX 3 (phone): The original regex r"([6-9]\d{9})" only matched Indian
+    mobile numbers. US numbers like (212) 555-4832 start with 2 and were
+    missed entirely. Numbers like (646) 555-7283 happened to work but only
+    because area code starts with 6. Strategy:
+      1. Indian mobile with +91/91 prefix → strip CC, capture 10 digits.
+      2. Standalone Indian mobile (starts with 6-9, no prefix).
+      3. Fallback: first 10-digit sequence in raw digits (handles US numbers).
     """
     import unicodedata
 
@@ -321,34 +337,34 @@ def extract_contacts(text):
     if m:
         email = m.group(0)
     else:
-        # fallback: remove spaces and retry (handles space-broken emails in PDFs)
         compressed = re.sub(r"[^A-Za-z0-9@._+-]", "", re.sub(r"\s+", "", text))
         m2 = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", compressed)
         email = m2.group(0) if m2 else ""
 
     # ── Phone ─────────────────────────────────────────────────────────────
-    # Strategy: regex that explicitly handles +91 / 91 / 0 prefixes so the
-    # 10-digit core is always captured in group 1.
     phone = ""
-    # Remove spaces and hyphens only for the phone search pass
     search_text = re.sub(r"[\s\-]", "", text)
-    m3 = re.search(r"(?:(?:\+|00)?91)?([6-9]\d{9})", search_text)
+
+    # 1. Indian mobile with country code
+    m3 = re.search(r"(?:(?:\+|00)?91)([6-9]\d{9})", search_text)
     if m3:
         phone = m3.group(1)
 
+    # 2. Standalone Indian mobile (no country code)
     if not phone:
-        # Fallback: strip digits, handle CC manually, pick first valid window
+        m4 = re.search(r"\b([6-9]\d{9})\b", search_text)
+        if m4:
+            phone = m4.group(1)
+
+    # 3. Fallback: first 10-digit block (US / international)
+    if not phone:
         digits = re.sub(r"\D", "", text)
         if len(digits) >= 12 and digits[:2] == "91":
             digits = digits[2:]
         elif len(digits) >= 11 and digits[0] == "0":
             digits = digits[1:]
-        candidates = [
-            digits[i: i + 10]
-            for i in range(len(digits) - 9)
-            if digits[i] in "6789"
-        ]
-        phone = candidates[0] if candidates else ""
+        if len(digits) >= 10:
+            phone = digits[:10]
 
     return email, phone
 
@@ -363,7 +379,8 @@ def recency_score(text):
     matches = re.findall(
         r"(intern|internship|experience|project|work|employed|role|position|"
         r"data|ml|ai|analyst|manager|consultant|engineer|developer|executive|"
-        r"associate|officer|director|partner|advocate|auditor|accountant|doctor)"
+        r"associate|officer|director|partner|advocate|auditor|accountant|"
+        r"attorney|counsel|solicitor|prosecutor)"
         r"[\s\S]{0,40}?(20\d{2})",
         text, flags=re.I,
     )
@@ -387,6 +404,16 @@ def recency_score(text):
 # ─────────────────────────────────────────────
 #  DOMAIN SIGNALS
 # ─────────────────────────────────────────────
+
+# FIX 4: Two changes to the `legal` domain:
+#   (a) Removed bare r"\bca\b" signal — "CA" as a US state abbreviation
+#       (e.g. "San Francisco, CA") was firing the legal domain signal,
+#       causing Daniel Roberts to be misclassified as `finance`.
+#       The CA-as-certification signal is already covered by "ca final",
+#       "ca qualified" etc. in the `accounting` domain.
+#   (b) Added stronger explicit legal signals: "juris doctor", "general counsel",
+#       "litigation partner", "corporate attorney", "antitrust", "appellate",
+#       "bar admission", "westlaw", "lexisnexis".
 
 DOMAIN_SIGNALS = {
 
@@ -491,17 +518,26 @@ DOMAIN_SIGNALS = {
     ],
 
     "legal": [
+        # High-weight explicit legal titles/credentials  (FIX 4)
+        ("juris doctor", 3), ("general counsel", 3),
+        ("litigation partner", 3), ("corporate attorney", 3),
+        ("chief legal officer", 3),
+        # Original high-weight signals
         ("advocate", 3), ("solicitor", 3), ("llb", 3), ("llm", 3),
         ("legal counsel", 3), ("company secretary", 3),
         ("litigation", 3), ("arbitration", 3),
+        # Medium-weight signals
         ("contract drafting", 2), ("contract review", 2),
         ("legal research", 2), ("intellectual property", 2),
         ("patent filing", 2), ("trademark registration", 2),
         ("regulatory compliance", 2), ("employment law", 2),
         ("company law", 2), ("gdpr", 2), ("due diligence legal", 2),
         ("mediation", 2), ("court appearances", 2),
+        ("antitrust", 2), ("appellate", 2), ("bar admission", 2),  # FIX 4
+        # Low-weight signals
         ("legal writing", 1), ("legal notices", 1),
         ("affidavits", 1), ("pleadings", 1), ("mou drafting", 1),
+        ("westlaw", 1), ("lexisnexis", 1),                          # FIX 4
     ],
 
     "business": [
