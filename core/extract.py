@@ -3,20 +3,10 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-
-# ─────────────────────────────────────────────
-#  TEXT CLEANING
-# ─────────────────────────────────────────────
-
 def clean_text(t):
     t = re.sub(r"[#\*•◆▪▸►\-–—]{2,}", " ", t)   # decorative separators / bullets
     t = re.sub(r"\s+", " ", t)
     return t.strip()
-
-
-# ─────────────────────────────────────────────
-#  MONTH LOOKUP
-# ─────────────────────────────────────────────
 
 MONTHS = {
     "jan": 1, "january": 1,
@@ -33,12 +23,6 @@ MONTHS = {
     "dec": 12, "december": 12,
 }
 
-
-# ─────────────────────────────────────────────
-#  CONTEXT CLASSIFIERS
-# ─────────────────────────────────────────────
-
-# Keywords that suggest a date-range belongs to education, NOT work
 _EDU_HEADERS = re.compile(
     r"\b(education|b\.?tech|b\.?e\.?|bachelor|secondary|senior\s+secondary|"
     r"high\s+school|college|university|school|class\s+x|class\s+xii|"
@@ -46,10 +30,6 @@ _EDU_HEADERS = re.compile(
     r"undergraduate|diploma|polytechnic)\b",
     re.I,
 )
-
-# FIX 1: Added legal-domain work roles so bare-year ranges in legal resumes
-# like "Gibson Dunn | 2012 – Present / Senior Litigation Partner" are correctly
-# counted as work experience instead of being skipped.
 _WORK_SIGNALS = re.compile(
     r"\b(intern|internship|experience|work|employ|role|position|"
     r"analyst|engineer|developer|manager|consultant|associate|"
@@ -58,11 +38,6 @@ _WORK_SIGNALS = re.compile(
     r"clerk|paralegal|deputy|general\s+counsel|legal\s+officer)\b",
     re.I,
 )
-
-
-# ─────────────────────────────────────────────
-#  DATE TOKEN PARSER
-# ─────────────────────────────────────────────
 
 def _parse_to_month_year(token):
     """
@@ -80,53 +55,29 @@ def _parse_to_month_year(token):
         t = datetime.today()
         return t.year, t.month
 
-    # "Jun 2024", "January 2023", etc.
     m = re.match(r"([a-z]{3,9})\s+(\d{4})$", token)
     if m and m.group(1) in MONTHS:
         return int(m.group(2)), MONTHS[m.group(1)]
 
-    # "03/06/2025"  (DD/MM/YYYY)
     m = re.match(r"(\d{1,2})/(\d{1,2})/(\d{4})$", token)
     if m:
         return int(m.group(3)), int(m.group(2))
 
-    # "06/2025"  (MM/YYYY)
     m = re.match(r"(\d{1,2})/(\d{4})$", token)
     if m:
         return int(m.group(2)), int(m.group(1))
 
-    # "2024"  (bare year — fullmatch so "2024abc" is rejected)
     m = re.fullmatch(r"(\d{4})", token)
     if m:
         return int(m.group(1)), 1
 
     return None, None
 
-
-# ─────────────────────────────────────────────
-#  YEARS / MONTHS OF EXPERIENCE
-# ─────────────────────────────────────────────
-
 def extract_years_of_experience(text):
-    """
-    Parse work experience duration from resume text.
-
-    Fixes vs original:
-      1. Processes text LINE BY LINE with local context (line above + current)
-         so education spans are distinguished from work spans.
-      2. Bare-year spans like "2023 – 2027" are skipped unless a work-signal
-         keyword appears nearby — prevents education durations being counted.
-      3. FIX 1 (legal resumes): _WORK_SIGNALS now includes legal-specific
-         roles so "2012 – Present / Partner" is correctly counted.
-      4. End-years in the future are rejected (graduation years).
-      5. Duplicate/overlapping spans are deduplicated.
-      6. Only validated month-names (Jan-Dec) are accepted as named tokens.
-    """
     current_year = datetime.today().year
     lines = text.splitlines()
     total_months = 0
-    seen_spans = []  # list of (start_abs_month, end_abs_month) to dedup
-
+    seen_spans = [] 
     DATE_TOKEN = (
         r"((?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*"
         r"\s+\d{4})"
@@ -144,8 +95,6 @@ def extract_years_of_experience(text):
 
     for i, line in enumerate(lines):
         context = " ".join(lines[max(0, i - 1): i + 1]).lower()
-
-        # ── Named-month ranges (most reliable) ───────────────────────────
         for m in NAMED_RANGE_RE.finditer(line):
             start_tok, end_tok = m.group(1), m.group(2)
             sy, sm = _parse_to_month_year(start_tok)
@@ -163,8 +112,6 @@ def extract_years_of_experience(text):
                 continue
             seen_spans.append((abs_start, abs_end))
             total_months += span
-
-        # ── Bare-year ranges (need context check) ────────────────────────
         for m in BARE_YEAR_RANGE_RE.finditer(line):
             sy = int(m.group(1))
             end_tok = m.group(2).lower()
@@ -190,38 +137,18 @@ def extract_years_of_experience(text):
             total_months += span
 
     return round(total_months / 12, 2), total_months
-
-
-# ─────────────────────────────────────────────
-#  EDUCATION LEVEL
-# ─────────────────────────────────────────────
-
 def extract_education_level(t):
-    """
-    Recognises: PhD, Masters (incl. MBA, MCA, LLM, M.Tech, M.Sc, PGDM,
-    Juris Doctor), Professional qualifications, Bachelors, Diploma/Other.
-
-    FIX 2: "Juris Doctor" was incorrectly matched as PhD because the pattern
-    `doctor(?:ate)?` contains the word "doctor". Fixed with a negative
-    lookbehind for "juris". "Juris Doctor" is now explicitly classified as
-    Masters (professional law degree).
-
-    FIX 2b: "BA LLB" pattern added to Bachelors so combined law degrees
-    like Ravi's are caught before the bare `r"\bb\.?\s*a"` fires.
-    """
     t_l = t.lower()
 
     phd_patterns = [
         r"ph\.?\s*d",
-        r"(?<!juris\s)doctor(?:ate)?",   # FIX 2: exclude "juris doctor"
+        r"(?<!juris\s)doctor(?:ate)?",   
         r"doctoral",
         r"d\.?\s*sc\b",
         r"d\.?\s*litt\b",
     ]
-
-    # Juris Doctor / JD added as explicit Masters-level pattern
     professional_patterns = [
-        r"\bjuris\s+doctor\b", r"\bj\.?\s*d\.?\b",   # FIX 2
+        r"\bjuris\s+doctor\b", r"\bj\.?\s*d\.?\b", 
         r"\bca\s+(?:final|qualified|inter|rank|foundation)\b",
         r"\bchartered\s+accountant\b",
         r"\bicai\b",
@@ -249,7 +176,7 @@ def extract_education_level(t):
     bachelor_patterns = [
         r"\bb\.?\s*tech\b", r"\bb\s*tech\b",
         r"\bb\.?\s*e\.?\b",
-        r"\bba\s+llb\b",                              # FIX 2b: combined law degree
+        r"\bba\s+llb\b",                             
         r"\bllb\b", r"bachelor\s+of\s+laws",
         r"\bmbbs\b",
         r"\bb\.?\s*pharm\b", r"\bbpharm\b",
@@ -284,11 +211,6 @@ def extract_education_level(t):
             return "Diploma"
     return "Other"
 
-
-# ─────────────────────────────────────────────
-#  CGPA EXTRACTION
-# ─────────────────────────────────────────────
-
 def extract_cgpa(t):
     t = t.lower()
     patterns = [
@@ -308,31 +230,13 @@ def extract_cgpa(t):
                 pass
     return None
 
-
-# ─────────────────────────────────────────────
-#  CONTACT EXTRACTION  (email + phone)
-# ─────────────────────────────────────────────
-
 def extract_contacts(text):
-    """
-    Extract email and phone number from resume text.
-
-    FIX 3 (phone): The original regex r"([6-9]\d{9})" only matched Indian
-    mobile numbers. US numbers like (212) 555-4832 start with 2 and were
-    missed entirely. Numbers like (646) 555-7283 happened to work but only
-    because area code starts with 6. Strategy:
-      1. Indian mobile with +91/91 prefix → strip CC, capture 10 digits.
-      2. Standalone Indian mobile (starts with 6-9, no prefix).
-      3. Fallback: first 10-digit sequence in raw digits (handles US numbers).
-    """
     import unicodedata
 
     t = unicodedata.normalize("NFKC", text)
     t = t.replace("\u00A0", " ")
     t = re.sub(r"[^\x00-\x7F]", " ", t)
     t = re.sub(r"\s+", " ", t).strip()
-
-    # ── Email ─────────────────────────────────────────────────────────────
     m = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", t)
     if m:
         email = m.group(0)
@@ -340,23 +244,16 @@ def extract_contacts(text):
         compressed = re.sub(r"[^A-Za-z0-9@._+-]", "", re.sub(r"\s+", "", text))
         m2 = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", compressed)
         email = m2.group(0) if m2 else ""
-
-    # ── Phone ─────────────────────────────────────────────────────────────
     phone = ""
     search_text = re.sub(r"[\s\-]", "", text)
 
-    # 1. Indian mobile with country code
     m3 = re.search(r"(?:(?:\+|00)?91)([6-9]\d{9})", search_text)
     if m3:
         phone = m3.group(1)
-
-    # 2. Standalone Indian mobile (no country code)
     if not phone:
         m4 = re.search(r"\b([6-9]\d{9})\b", search_text)
         if m4:
             phone = m4.group(1)
-
-    # 3. Fallback: first 10-digit block (US / international)
     if not phone:
         digits = re.sub(r"\D", "", text)
         if len(digits) >= 12 and digits[:2] == "91":
@@ -367,11 +264,6 @@ def extract_contacts(text):
             phone = digits[:10]
 
     return email, phone
-
-
-# ─────────────────────────────────────────────
-#  RECENCY SCORE
-# ─────────────────────────────────────────────
 
 def recency_score(text):
     current_year = datetime.today().year
@@ -399,21 +291,6 @@ def recency_score(text):
     elif gap == 2: return 0.75
     elif gap <= 4: return 0.6
     return 0.45
-
-
-# ─────────────────────────────────────────────
-#  DOMAIN SIGNALS
-# ─────────────────────────────────────────────
-
-# FIX 4: Two changes to the `legal` domain:
-#   (a) Removed bare r"\bca\b" signal — "CA" as a US state abbreviation
-#       (e.g. "San Francisco, CA") was firing the legal domain signal,
-#       causing Daniel Roberts to be misclassified as `finance`.
-#       The CA-as-certification signal is already covered by "ca final",
-#       "ca qualified" etc. in the `accounting` domain.
-#   (b) Added stronger explicit legal signals: "juris doctor", "general counsel",
-#       "litigation partner", "corporate attorney", "antitrust", "appellate",
-#       "bar admission", "westlaw", "lexisnexis".
 
 DOMAIN_SIGNALS = {
 
@@ -518,26 +395,22 @@ DOMAIN_SIGNALS = {
     ],
 
     "legal": [
-        # High-weight explicit legal titles/credentials  (FIX 4)
         ("juris doctor", 3), ("general counsel", 3),
         ("litigation partner", 3), ("corporate attorney", 3),
         ("chief legal officer", 3),
-        # Original high-weight signals
         ("advocate", 3), ("solicitor", 3), ("llb", 3), ("llm", 3),
         ("legal counsel", 3), ("company secretary", 3),
         ("litigation", 3), ("arbitration", 3),
-        # Medium-weight signals
         ("contract drafting", 2), ("contract review", 2),
         ("legal research", 2), ("intellectual property", 2),
         ("patent filing", 2), ("trademark registration", 2),
         ("regulatory compliance", 2), ("employment law", 2),
         ("company law", 2), ("gdpr", 2), ("due diligence legal", 2),
         ("mediation", 2), ("court appearances", 2),
-        ("antitrust", 2), ("appellate", 2), ("bar admission", 2),  # FIX 4
-        # Low-weight signals
+        ("antitrust", 2), ("appellate", 2), ("bar admission", 2),
         ("legal writing", 1), ("legal notices", 1),
         ("affidavits", 1), ("pleadings", 1), ("mou drafting", 1),
-        ("westlaw", 1), ("lexisnexis", 1),                          # FIX 4
+        ("westlaw", 1), ("lexisnexis", 1),                        
     ],
 
     "business": [
@@ -649,17 +522,7 @@ DOMAIN_SIGNALS = {
     ],
 }
 
-
-# ─────────────────────────────────────────────
-#  DOMAIN DETECTION
-# ─────────────────────────────────────────────
-
 def detect_domain(text):
-    """
-    Weighted domain detection with whole-word regex matching.
-    Returns domain with highest cumulative weighted score.
-    Falls back to 'general' if no signals fire.
-    """
     t = text.lower()
     scores = {}
 
@@ -675,11 +538,6 @@ def detect_domain(text):
         return "general"
 
     return max(scores, key=scores.get)
-
-
-# ─────────────────────────────────────────────
-#  EXPERIENCE NORMALISATION
-# ─────────────────────────────────────────────
 
 EXP_CAPS = {
     "web_development":    2,
@@ -708,11 +566,6 @@ EXP_CAPS = {
 def normalize_experience(years, domain="general"):
     cap = EXP_CAPS.get(domain, 10)
     return min(years / cap, 1.0)
-
-
-# ─────────────────────────────────────────────
-#  MASTER PROFILE EXTRACTOR
-# ─────────────────────────────────────────────
 
 from core.skill_extractor import build_skill_index, extract_skills_whitelist
 
